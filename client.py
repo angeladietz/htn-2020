@@ -46,7 +46,7 @@ class User(pygame.sprite.Sprite):
 
 class Arena(ConnectionListener):
     def __init__(self, host, port):
-        pygame.mixer.pre_init(44100, 16, 2, 4096)
+        pygame.mixer.pre_init(44100, -16, 2, 4096)
         pygame.init()
         self.Connect((host, port))
         print("Chat client started")
@@ -120,8 +120,8 @@ if __name__ == '__main__':
     else:
         host, port = sys.argv[1].split(":")
         arena = Arena(host, int(port))
+        pygame.mixer.music.load("./sounds/bensound-funnysong.ogg")
+        pygame.mixer.music.play(1)
         while 1:
-            pygame.mixer.music.load("sounds/bensound-funnysong.ogg")
-            pygame.mixer.music.play(1)
             arena.update()
             sleep(0.001)
