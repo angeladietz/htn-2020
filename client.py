@@ -84,8 +84,6 @@ class Arena(ConnectionListener):
           # label = self.font.render(u_name, 1, (0,0,0))
           self.screen.blit(u_val.surf, u_val.rect)
           self.screen.blit(self.font.render(u_name, 1, (0,0,0)), (u_val.rect.x, u_val.rect.y+15))
-        
-        # self.screen.blit(self.me.surf, self.me.rect)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -119,6 +117,8 @@ class Arena(ConnectionListener):
         if data['user'] in self.users.keys():
             self.users[data['user']].rect.x = data['x']
             self.users[data['user']].rect.y = data['y']
+        else:
+          self.Network_newuser(data)
     
     def Network_message(self, data):
         print(data['who'] + ": " + data['message'])
