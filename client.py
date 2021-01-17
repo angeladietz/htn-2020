@@ -26,7 +26,7 @@ class User(pygame.sprite.Sprite):
     self.sound = None
 
   # Move the sprite based on user keypresses
-  def update(self, pressed_keys):
+  def update(self, pressed_keys, width, height):
     if pressed_keys[K_UP]:
       self.rect.move_ip(0, -5)
     if pressed_keys[K_DOWN]:
@@ -35,25 +35,26 @@ class User(pygame.sprite.Sprite):
       self.rect.move_ip(-5, 0)
     if pressed_keys[K_RIGHT]:
       self.rect.move_ip(5, 0)
-  
+
+    #Keep player on the screen
+    if self.rect.left < 0:
+      self.rect.left = 0
+    if self.rect.right > width:
+      self.rect.right = width
+    if self.rect.top <= 0:
+      self.rect.top = 0
+    if self.rect.bottom >= height:
+      self.rect.bottom = height
+
   def set_user_song(self, song):
     self.sound = song
-
-    # Keep player on the screen
-    # if self.rect.left < 0:
-    #   self.rect.left = 0
-    # if self.rect.right > width:
-    #   self.rect.right = width
-    # if self.rect.top <= 0:
-    #   self.rect.top = 0
-    # if self.rect.bottom >= height:
-    #   self.rect.bottom = height
 
 class Arena(ConnectionListener):
     def __init__(self, host, port):
         pygame.mixer.pre_init(44100, -16, 2, 4096)
         pygame.init()
         self.Connect((host, port))
+
         print("Chat client started")
         print("Ctrl-C to exit")
         # get a nickname from the user before starting
@@ -61,12 +62,11 @@ class Arena(ConnectionListener):
         self.my_name = stdin.readline().rstrip("\n")        
         song = input("Enter your song: \n") 
 
-
-        # launch our threaded input loop
-        # t = start_new_thread(self.InputLoop, ())
-
-        width, height = 800, 600
-        self.screen = pygame.display.set_mode((width, height))
+        self.width = 870
+        self.height = 535
+        self.background = pygame.image.load("img/workspace.jpg")
+        self.background = pygame.transform.scale(self.background, (self.width, self.height))
+        self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Arena")
         self.clock=pygame.time.Clock()
         self.users = {}
@@ -91,9 +91,9 @@ class Arena(ConnectionListener):
         # self.Send({"action": "hello", "message": "hello client!"})
 
         self.clock.tick(60)
-        self.screen.fill((150,20,200))
+        self.screen.blit(self.background, (0,0))
         self.pressed_keys = pygame.key.get_pressed()
-        self.me.update(self.pressed_keys)
+        self.me.update(self.pressed_keys, self.width, self.height)
         self.Send({"action": "pos", "name": self.my_name, "x":self.me.rect.x, "y":self.me.rect.y, "sound": self.me.sound})
         self.users[self.my_name] = self.me
 
@@ -127,12 +127,6 @@ class Arena(ConnectionListener):
         #update the screen
         pygame.display.flip()
 
-    # def InputLoop(self):
-    #     # horrid threaded input loop
-    #     # continually reads from stdin and sends whatever is typed to the server
-    #     while 1:
-    #         connection.Send({"action": "message", "message": stdin.readline().rstrip("\n")})
-    
     #######################################
     ### Network event/message callbacks ###
     #######################################
