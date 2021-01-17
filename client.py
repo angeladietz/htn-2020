@@ -24,7 +24,6 @@ class User(pygame.sprite.Sprite):
     self.rect = self.surf.get_rect()
     self.sound = None
 
-
   # Move the sprite based on user keypresses
   def update(self, pressed_keys):
     if pressed_keys[K_UP]:
@@ -70,14 +69,19 @@ class Arena(ConnectionListener):
         pygame.display.set_caption("Arena")
         self.clock=pygame.time.Clock()
         self.users = {}
+        self.user_channels = {}
         self.font = pygame.font.SysFont(None, 32)
 
         self.me = User()
         self.users[self.my_name] = self.me
         self.me.set_user_song(song)
-        pygame.mixer.music.load("sounds/" + self.me.sound)
-        pygame.mixer.music.play(-1)
-        connection.Send({"action": "nickname", "nickname": self.my_name, "x": self.me.rect.x, "y": self.me.rect.y})
+        while pygame.mixer.find_channel() is None:
+          pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
+        self.user_channels[self.my_name] = pygame.mixer.find_channel()
+        self.user_channels[self.my_name].play(pygame.mixer.Sound("sounds/" + self.me.sound))
+            
+        # pygame.mixer.music.play(-1)
+        connection.Send({"action": "nickname", "nickname": self.my_name, "x": self.me.rect.x, "y": self.me.rect.y, "sound": song})
         print("Client started")
         
     def update(self): 
@@ -89,7 +93,7 @@ class Arena(ConnectionListener):
         self.screen.fill((150,20,200))
         self.pressed_keys = pygame.key.get_pressed()
         self.me.update(self.pressed_keys)
-        self.Send({"action": "pos", "name": self.my_name, "x":self.me.rect.x, "y":self.me.rect.y})
+        self.Send({"action": "pos", "name": self.my_name, "x":self.me.rect.x, "y":self.me.rect.y, "sound": self.me.sound})
         self.users[self.my_name] = self.me
 
         for u_name, u_val in self.users.items():
@@ -104,23 +108,29 @@ class Arena(ConnectionListener):
         #update the screen
         pygame.display.flip()
 
-    def InputLoop(self):
-        # horrid threaded input loop
-        # continually reads from stdin and sends whatever is typed to the server
-        while 1:
-            connection.Send({"action": "message", "message": stdin.readline().rstrip("\n")})
+    # def InputLoop(self):
+    #     # horrid threaded input loop
+    #     # continually reads from stdin and sends whatever is typed to the server
+    #     while 1:
+    #         connection.Send({"action": "message", "message": stdin.readline().rstrip("\n")})
     
     #######################################
     ### Network event/message callbacks ###
     #######################################
     
     def Network_users(self, data):
+        #TODO: if we have a user which is not in data, delete it
         print("*** users: " + ", ".join([u for u in data['users']]))
 
     def Network_newuser(self, data):
         new_user = User()
         new_user.rect.x = data['x']
         new_user.rect.y = data['y']
+        new_user.sound = data['sound']
+        while pygame.mixer.find_channel() is None:
+          pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
+        self.user_channels[data['user']] = pygame.mixer.find_channel()
+        self.user_channels[data['user']].play(pygame.mixer.Sound("sounds/" + new_user.sound))
         self.users[data['user']] = new_user
         print("new user", data)
 
