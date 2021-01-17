@@ -22,6 +22,8 @@ class User(pygame.sprite.Sprite):
     self.surf = pygame.Surface((50, 50))
     self.surf.fill((255, 255, 255))
     self.rect = self.surf.get_rect()
+    self.sound = None
+
 
   # Move the sprite based on user keypresses
   def update(self, pressed_keys):
@@ -33,6 +35,9 @@ class User(pygame.sprite.Sprite):
       self.rect.move_ip(-5, 0)
     if pressed_keys[K_RIGHT]:
       self.rect.move_ip(5, 0)
+  
+  def set_user_song(self, song):
+    self.sound = song
 
     # Keep player on the screen
     # if self.rect.left < 0:
@@ -46,13 +51,17 @@ class User(pygame.sprite.Sprite):
 
 class Arena(ConnectionListener):
     def __init__(self, host, port):
+        pygame.mixer.pre_init(44100, -16, 2, 4096)
         pygame.init()
         self.Connect((host, port))
         print("Chat client started")
         print("Ctrl-C to exit")
         # get a nickname from the user before starting
         print("Enter your nickname: ")
-        self.my_name = stdin.readline().rstrip("\n")
+        self.my_name = stdin.readline().rstrip("\n")        
+        song = input("Enter your song: \n") 
+
+
         # launch our threaded input loop
         # t = start_new_thread(self.InputLoop, ())
 
@@ -65,6 +74,9 @@ class Arena(ConnectionListener):
 
         self.me = User()
         self.users[self.my_name] = self.me
+        self.me.set_user_song(song)
+        pygame.mixer.music.load("sounds/" + self.me.sound)
+        pygame.mixer.music.play(-1)
         connection.Send({"action": "nickname", "nickname": self.my_name, "x": self.me.rect.x, "y": self.me.rect.y})
         print("Client started")
         
@@ -145,6 +157,7 @@ if __name__ == '__main__':
     else:
         host, port = sys.argv[1].split(":")
         arena = Arena(host, int(port))
+        #pygame.mixer.music.play(1)
         while 1:
             arena.update()
             sleep(0.001)
