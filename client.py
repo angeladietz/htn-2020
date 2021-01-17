@@ -76,10 +76,12 @@ class Arena(ConnectionListener):
         self.me = User()
         self.users[self.my_name] = self.me
         self.me.set_user_song(song)
+        self.should_play_music = False
         while pygame.mixer.find_channel() is None:
           pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
         self.user_channels[self.my_name] = pygame.mixer.find_channel()
-        self.user_channels[self.my_name].play(pygame.mixer.Sound("sounds/" + self.me.sound))
+        if self.should_play_music:
+            self.user_channels[self.my_name].play(pygame.mixer.Sound("sounds/" + self.me.sound))
             
         # pygame.mixer.music.play(-1)
         connection.Send({"action": "nickname", "nickname": self.my_name, "x": self.me.rect.x, "y": self.me.rect.y, "sound": song})
@@ -103,6 +105,7 @@ class Arena(ConnectionListener):
           self.screen.blit(self.font.render(u_name, 1, (0,0,0)), (u_val.rect.x, u_val.rect.y+15))
 
         #update the volume of each channel
+        
         for u_name, u_val in self.users.items():
             if u_name == self.my_name:
                 self.user_channels[self.my_name].set_volume(0.1)
@@ -131,6 +134,13 @@ class Arena(ConnectionListener):
     ### Network event/message callbacks ###
     #######################################
     
+    def Network_first(self, data):
+      if data['status'] == True:
+        self.should_play_music = True
+        for user, channel in self.user_channels.items():
+            print(self.users[user].sound)
+            channel.play(pygame.mixer.Sound("sounds/" +self.users[user].sound))
+
     def Network_users(self, data):
         #TODO: if we have a user which is not in data, delete it
         user_names = list(self.users.keys())
@@ -159,7 +169,8 @@ class Arena(ConnectionListener):
         while pygame.mixer.find_channel() is None:
           pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
         self.user_channels[data['user']] = pygame.mixer.find_channel()
-        self.user_channels[data['user']].play(pygame.mixer.Sound("sounds/" + new_user.sound))
+        if self.should_play_music:
+            self.user_channels[data['user']].play(pygame.mixer.Sound("sounds/" + new_user.sound))
         self.users[data['user']] = new_user
         print("new user", data)
 

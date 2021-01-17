@@ -32,6 +32,7 @@ class ClientChannel(Channel):
         self.nickname = data['nickname']
         self._server.SendNewUser(data['nickname'], data['x'], data['y'], data['sound'])
         self._server.SendUsers()
+        self._server.SendFirst()
  
 class ArenaServer(Server):
     channelClass = ClientChannel
@@ -44,6 +45,12 @@ class ArenaServer(Server):
     def Connected(self, channel, addr):
         self.AddUser(channel)
         print("new connection")
+
+    def SendFirst(self):
+        print("checking first")
+        if len(self.users) == 1:
+            print("first")
+            self.SendToAll({"action": "first", "status": True})
 
     def AddUser(self, user):
         print("New User" + str(user.addr))
