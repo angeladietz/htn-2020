@@ -15,6 +15,7 @@ from pygame.locals import (
 
 from PodSixNet.Connection import ConnectionListener, connection
 from time import sleep
+import math
 
 class User(pygame.sprite.Sprite):
   def __init__(self):
@@ -100,6 +101,24 @@ class Arena(ConnectionListener):
           # label = self.font.render(u_name, 1, (0,0,0))
           self.screen.blit(u_val.surf, u_val.rect)
           self.screen.blit(self.font.render(u_name, 1, (0,0,0)), (u_val.rect.x, u_val.rect.y+15))
+
+        #update the volume of each channel
+        for u_name, u_val in self.users.items():
+            if u_name == self.my_name:
+                self.user_channels[self.my_name].set_volume(0.1)
+            else:
+              #find distance between self and u_name
+              #anything more than 400 away is 0, anything closer than 20 is 1.0
+              distance = math.hypot(abs(self.me.rect.x - u_val.rect.x), abs(self.me.rect.y - u_val.rect.y))
+              volume = 1.0
+              if distance > 400:
+                volume = 0
+              elif distance < 20:
+                volume = 1.0
+              else:
+                volume = 1 - ((distance - 20) / 380)
+              self.user_channels[u_name].set_volume(volume)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
