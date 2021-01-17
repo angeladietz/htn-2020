@@ -133,6 +133,22 @@ class Arena(ConnectionListener):
     
     def Network_users(self, data):
         #TODO: if we have a user which is not in data, delete it
+        user_names = list(self.users.keys())
+        print(user_names)
+        for u in data['users']:
+            if u in user_names:
+                user_names.remove(u)
+
+        #everyone left in user_names are users who left the arena
+        for old_user in user_names:
+            # stop their channel
+            # remove them from self.users
+            if old_user in self.user_channels:
+                self.user_channels[old_user].stop()
+                del self.user_channels[old_user]
+            if old_user in self.users:
+                del self.users[old_user]
+
         print("*** users: " + ", ".join([u for u in data['users']]))
 
     def Network_newuser(self, data):
@@ -180,7 +196,6 @@ if __name__ == '__main__':
     else:
         host, port = sys.argv[1].split(":")
         arena = Arena(host, int(port))
-        #pygame.mixer.music.play(1)
         while 1:
             arena.update()
             sleep(0.001)

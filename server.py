@@ -48,7 +48,7 @@ class ArenaServer(Server):
     def AddUser(self, user):
         print("New User" + str(user.addr))
         self.users[user] = True
-        self.SendUsers()
+        # self.SendUsers()
         print("users", [u for u in self.users])
     
     def DelUser(self, user):
