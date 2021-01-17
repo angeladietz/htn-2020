@@ -58,8 +58,9 @@ class Arena(ConnectionListener):
         print("Ctrl-C to exit")
         # get a nickname from the user before starting
         print("Enter your nickname: ")
-        connection.Send({"action": "nickname", "nickname": stdin.readline().rstrip("\n")})
+        self.my_name = stdin.readline().rstrip("\n")        
         song = input("Enter your song: \n") 
+
 
         # launch our threaded input loop
         # t = start_new_thread(self.InputLoop, ())
@@ -68,22 +69,33 @@ class Arena(ConnectionListener):
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Arena")
         self.clock=pygame.time.Clock()
-        self.user = User()
-        self.user.set_user_song(song)
-        pygame.mixer.music.load("sounds/" + self.user.sound)
+        self.users = {}
+        self.font = pygame.font.SysFont(None, 32)
+
+        self.me = User()
+        self.users[self.my_name] = self.me
+        self.me.set_user_song(song)
+        pygame.mixer.music.load("sounds/" + self.me.sound)
         pygame.mixer.music.play(-1)
+        connection.Send({"action": "nickname", "nickname": self.my_name, "x": self.me.rect.x, "y": self.me.rect.y})
         print("Client started")
         
-    def update(self):
+    def update(self): 
         connection.Pump()
         self.Pump()
-        self.Send({"action": "hello", "message": "hello client!"})
+        # self.Send({"action": "hello", "message": "hello client!"})
 
         self.clock.tick(60)
         self.screen.fill((150,20,200))
         self.pressed_keys = pygame.key.get_pressed()
-        self.user.update(self.pressed_keys)
-        self.screen.blit(self.user.surf, self.user.rect)
+        self.me.update(self.pressed_keys)
+        self.Send({"action": "pos", "name": self.my_name, "x":self.me.rect.x, "y":self.me.rect.y})
+        self.users[self.my_name] = self.me
+
+        for u_name, u_val in self.users.items():
+          # label = self.font.render(u_name, 1, (0,0,0))
+          self.screen.blit(u_val.surf, u_val.rect)
+          self.screen.blit(self.font.render(u_name, 1, (0,0,0)), (u_val.rect.x, u_val.rect.y+15))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -104,6 +116,21 @@ class Arena(ConnectionListener):
     
     def Network_users(self, data):
         print("*** users: " + ", ".join([u for u in data['users']]))
+
+    def Network_newuser(self, data):
+        new_user = User()
+        new_user.rect.x = data['x']
+        new_user.rect.y = data['y']
+        self.users[data['user']] = new_user
+        print("new user", data)
+
+    def Network_updateuserpos(self, data):
+        # print("updating data for", data['user'])
+        if data['user'] in self.users.keys():
+            self.users[data['user']].rect.x = data['x']
+            self.users[data['user']].rect.y = data['y']
+        else:
+          self.Network_newuser(data)
     
     def Network_message(self, data):
         print(data['who'] + ": " + data['message'])

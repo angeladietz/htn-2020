@@ -1,6 +1,3 @@
-# import PodSixNet
-# import PodSixNet.Channel
-# import PodSixNet.Server
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
 from time import sleep
@@ -22,11 +19,18 @@ class ClientChannel(Channel):
     ### Network specific callbacks ###
     ##################################
     
+    def Network_pos(self, data):
+        # print("updating pos")
+        # print(data)
+        self._server.SendUpdatedUserPos(data['name'], data['x'], data['y'])
+        # self._server.SendUsers()
+
     def Network_message(self, data):
         self._server.SendToAll({"action": "message", "message": data['message'], "who": self.nickname})
     
     def Network_nickname(self, data):
         self.nickname = data['nickname']
+        self._server.SendNewUser(data['nickname'], data['x'], data['y'])
         self._server.SendUsers()
  
 class ArenaServer(Server):
@@ -51,6 +55,12 @@ class ArenaServer(Server):
         print("Deleting User" + str(user.addr))
         del self.users[user]
         self.SendUsers()
+
+    def SendNewUser(self, u_name, u_x, u_y):
+        self.SendToAll({"action": "newuser", "user": u_name, "x":u_x, "y":u_y})
+
+    def SendUpdatedUserPos(self, u_name, u_x, u_y):
+        self.SendToAll({"action": "updateuserpos", "user": u_name, "x":u_x, "y":u_y})
     
     def SendUsers(self):
         self.SendToAll({"action": "users", "users": [u.nickname for u in self.users]})
@@ -72,8 +82,3 @@ if __name__ == '__main__':
         host, port = sys.argv[1].split(":")
         s = ArenaServer(localaddr=(host, int(port)))
         s.Launch()
-# print("STARTING SERVER ON LOCALHOST")
-# arenaServe=ArenaServer()
-# while True:
-#     arenaServe.Pump()
-#     sleep(0.01)
