@@ -22,7 +22,7 @@ class User(pygame.sprite.Sprite):
   def __init__(self, avatar):
     super(User, self).__init__()
     
-    self.avatar = 'inside\\' + avatar
+    self.avatar = avatar
     print(self.avatar)
     self.surf = pygame.image.load(self.avatar)
     self.surf = pygame.transform.scale(self.surf,(100,100))
@@ -80,8 +80,8 @@ class Arena(ConnectionListener):
         self.user_channels = {}
         self.font = pygame.font.SysFont(None, 32)
         
-        self.avatars = ["cool-girl.png" , "cool-boy.png", "dog.png"]
-        avatar = self.avatars[random.randrange(0,2,1)]
+        self.avatars = ["cool-girl.png" , "cool-guy.png", "dog.png"]
+        avatar = "img/" + self.avatars[random.randrange(0,2,1)]
         self.me = User(avatar)
         self.users[self.my_name] = self.me
         self.me.set_user_song(song)
