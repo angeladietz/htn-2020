@@ -16,12 +16,17 @@ from pygame.locals import (
 from PodSixNet.Connection import ConnectionListener, connection
 from time import sleep
 import math
+import random
 
 class User(pygame.sprite.Sprite):
-  def __init__(self):
+  def __init__(self, avatar):
     super(User, self).__init__()
-    self.surf = pygame.Surface((50, 50))
-    self.surf.fill((255, 255, 255))
+    
+    self.avatar = avatar
+    print(self.avatar)
+    self.surf = pygame.image.load(self.avatar)
+    self.surf = pygame.transform.scale(self.surf,(100,100))
+    #self.surf.fill((255, 255, 255))
     self.rect = self.surf.get_rect()
     self.sound = None
 
@@ -60,7 +65,7 @@ class Arena(ConnectionListener):
         # get a nickname from the user before starting
         print("Enter your nickname: ")
         self.my_name = stdin.readline().rstrip("\n")        
-        song = input("Enter your song: \n") 
+        song = input("Enter your song: \n")
 
         self.width = 870
         self.height = 535
@@ -69,22 +74,33 @@ class Arena(ConnectionListener):
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Arena")
         self.clock=pygame.time.Clock()
+
+
         self.users = {}
         self.user_channels = {}
         self.font = pygame.font.SysFont(None, 32)
-
-        self.me = User()
+        
+        self.avatars = ["cool-girl.png" , "cool-guy.png", "dog.png"]
+        avatar = "img/" + self.avatars[random.randrange(0,2,1)]
+        self.me = User(avatar)
         self.users[self.my_name] = self.me
         self.me.set_user_song(song)
         while pygame.mixer.find_channel() is None:
           pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
         self.user_channels[self.my_name] = pygame.mixer.find_channel()
         self.user_channels[self.my_name].play(pygame.mixer.Sound("sounds/" + self.me.sound))
-            
-        # pygame.mixer.music.play(-1)
-        connection.Send({"action": "nickname", "nickname": self.my_name, "x": self.me.rect.x, "y": self.me.rect.y, "sound": song})
-        print("Client started")
         
+     #   self.screen.fill(0,0,0)
+
+        # pygame.mixer.music.play(-1)
+        connection.Send({"action": "nickname", "nickname": self.my_name, "x": self.me.rect.x, "y": self.me.rect.y, "sound": song, "avatar": self.me.avatar })
+        print("Client started")
+    
+    # def getAvatar(self):
+    #     for avatar in self.avatars:
+    #       if (self.avatars[avatar] == False):
+    #         myavatar = 
+
     def update(self): 
         connection.Pump()
         self.Pump()
@@ -94,7 +110,7 @@ class Arena(ConnectionListener):
         self.screen.blit(self.background, (0,0))
         self.pressed_keys = pygame.key.get_pressed()
         self.me.update(self.pressed_keys, self.width, self.height)
-        self.Send({"action": "pos", "name": self.my_name, "x":self.me.rect.x, "y":self.me.rect.y, "sound": self.me.sound})
+        self.Send({"action": "pos", "name": self.my_name, "x":self.me.rect.x, "y":self.me.rect.y, "sound": self.me.sound, "avatar" : self.me.avatar})
         self.users[self.my_name] = self.me
 
         for u_name, u_val in self.users.items():
@@ -152,7 +168,7 @@ class Arena(ConnectionListener):
         print("*** users: " + ", ".join([u for u in data['users']]))
 
     def Network_newuser(self, data):
-        new_user = User()
+        new_user = User(data['avatar'])
         new_user.rect.x = data['x']
         new_user.rect.y = data['y']
         new_user.sound = data['sound']
