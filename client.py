@@ -24,7 +24,15 @@ class User(pygame.sprite.Sprite):
     
     self.avatar = avatar
     print(self.avatar)
-    self.surf = pygame.image.load(self.avatar)
+    # self.surf = pygame.image.load(self.avatar).convert()
+    if (self.avatar == "img/girl.png"):
+        self.surf = pygame.image.load(self.avatar).convert()
+        self.surf.set_colorkey((247,247,247), RLEACCEL)
+    elif (self.avatar == "img/dog.png"):
+        self.surf = pygame.image.load(self.avatar).convert()
+        self.surf.set_colorkey((246,246,246), RLEACCEL)
+    else:
+        self.surf = pygame.image.load(self.avatar)
     self.surf = pygame.transform.scale(self.surf,(100,100))
     #self.surf.fill((255, 255, 255))
     self.rect = self.surf.get_rect()
@@ -80,8 +88,8 @@ class Arena(ConnectionListener):
         self.user_channels = {}
         self.font = pygame.font.SysFont(None, 32)
         
-        self.avatars = ["cool-girl.png" , "cool-guy.png", "dog.png"]
-        avatar = "img/" + self.avatars[random.randrange(0,2,1)]
+        self.avatars = ["girl.png" , "cool-guy.png", "dog.png"]
+        avatar = "img/" + random.choice(self.avatars)
         self.me = User(avatar)
         self.users[self.my_name] = self.me
         self.me.set_user_song(song)
@@ -116,7 +124,7 @@ class Arena(ConnectionListener):
         for u_name, u_val in self.users.items():
           # label = self.font.render(u_name, 1, (0,0,0))
           self.screen.blit(u_val.surf, u_val.rect)
-          self.screen.blit(self.font.render(u_name, 1, (0,0,0)), (u_val.rect.x, u_val.rect.y+15))
+          self.screen.blit(self.font.render(u_name, 1, (0,0,0)), (u_val.rect.x, u_val.rect.y+100))
 
         #update the volume of each channel
         for u_name, u_val in self.users.items():
