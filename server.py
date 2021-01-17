@@ -22,7 +22,7 @@ class ClientChannel(Channel):
     def Network_pos(self, data):
         # print("updating pos")
         # print(data)
-        self._server.SendUpdatedUserPos(data['name'], data['x'], data['y'], data['sound'])
+        self._server.SendUpdatedUserPos(data['name'], data['x'], data['y'], data['sound'], data['avatar'])
         # self._server.SendUsers()
 
     def Network_message(self, data):
@@ -30,7 +30,7 @@ class ClientChannel(Channel):
     
     def Network_nickname(self, data):
         self.nickname = data['nickname']
-        self._server.SendNewUser(data['nickname'], data['x'], data['y'], data['sound'])
+        self._server.SendNewUser(data['nickname'], data['x'], data['y'], data['sound'], data['avatar'])
         self._server.SendUsers()
         self._server.SendFirst()
  
@@ -63,11 +63,11 @@ class ArenaServer(Server):
         del self.users[user]
         self.SendUsers()
 
-    def SendNewUser(self, u_name, u_x, u_y, sound):
-        self.SendToAll({"action": "newuser", "user": u_name, "x":u_x, "y":u_y, "sound": sound})
+    def SendNewUser(self, u_name, u_x, u_y, sound, avatar):
+        self.SendToAll({"action": "newuser", "user": u_name, "x":u_x, "y":u_y, "sound": sound, "avatar" : avatar})
 
-    def SendUpdatedUserPos(self, u_name, u_x, u_y, sound):
-        self.SendToAll({"action": "updateuserpos", "user": u_name, "x":u_x, "y":u_y, "sound": sound})
+    def SendUpdatedUserPos(self, u_name, u_x, u_y, sound, avatar):
+        self.SendToAll({"action": "updateuserpos", "user": u_name, "x":u_x, "y":u_y, "sound": sound, "avatar" : avatar})
     
     def SendUsers(self):
         self.SendToAll({"action": "users", "users": [u.nickname for u in self.users]})
